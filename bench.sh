@@ -336,11 +336,6 @@ benchtest()
 
 
 #上传文件
-updatefile()
-{
-	resultstr=$(curl -s -T $logfilename "http://test.91yun.org/logfileupload.php")
-	echo -e $resultstr | tee -a $logfilename
-}
 
 simple_test()
 {
@@ -349,7 +344,6 @@ simple_test()
 	bdtest
 	iotest
 	pingtest
-	updatefile
 }
 
 normal_test()
@@ -364,7 +358,6 @@ normal_test()
 	backtracetest
 	pingtest
 	gotoping
-	updatefile
 	
 }
 
@@ -381,7 +374,6 @@ all_test()
 	pingtest
 	gotoping
 	benchtest
-	updatefile
 	
 }
 
