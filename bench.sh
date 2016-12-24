@@ -2,8 +2,6 @@
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 export PATH
 
-echo "服务器提供商（host provider）[default:Enter]"
-read hostp
 echo "开始测试中，会需要点时间，请稍后"
 #===============================以下是各类要用到的函数========================================
 #teddey的besh测试网络下载和IO用到的
@@ -98,15 +96,7 @@ ping_test(){
 	
 }
 
-#测试跳板ping
-#参数1,ping的地址
-#参数2,描述
-testping()
-{
-	echo "{start testing $2 ping}" | tee -a $logfilename
-	ping -c 10 $1 | tee -a $logfilename
-	echo "{end testing}" | tee -a $logfilename
-}
+
 #==========================自用函数结束========================================
 
 
@@ -120,7 +110,7 @@ prewget()
 	[[ "$os" == '' ]] && echo 'Error: Your system is not supported to run it!' && exit 1
 
 	if [ "$os" == 'centos' ]; then
-		#yum -y install make gcc gcc-c++ gdb mtr wget curl automake autoconf time perl-Time-HiRes python perl virt-what
+		#yum -y install make gcc gcc-c++ gdb mtr wget curl automake autoconf time perl-Time-HiRes python perl
 		yum -y install mtr curl
 	else
 		apt-get update
@@ -136,8 +126,6 @@ prewget()
 	opsy=$( get_opsy )
 	arch=$( uname -m )
 	lbit=$( getconf LONG_BIT )
-	host=$hostp
-	up=$( awk '{a=$1/86400;b=($1%86400)/3600;c=($1%3600)/60;d=$1%60} {printf("%ddays, %d:%d:%d\n",a,b,c,d)}' /proc/uptime )
 	kern=$( uname -r )
 	ipv6=$( wget -qO- -t1 -T2 ipv6.icanhazip.com )
 	IP=$(curl -s myip.ipip.net | awk -F ' ' '{print $2}' | awk -F '：' '{print $2}')
@@ -149,26 +137,6 @@ prewget()
 	backtime=`date +%Y%m%d`
 	logfilename="test91yun.log"
 
-}
-#查看虚拟化技术
-virt()
-{
-	if [ "$os" == 'centos' ]; then
-		yum -y install virt-what
-	else
-		apt-get update
-		apt-get -y install virt-what
-	fi
-	
-	#查看虚拟化技术：
-	# wget http://people.redhat.com/~rjones/virt-what/files/virt-what-1.12.tar.gz
-	# tar zxvf virt-what-1.12.tar.gz
-	# cd virt-what-1.12/
-	# ./configure
-	# make && make install
-	vm=`virt-what`
-	# cd ..
-	# rm -rf virt-what*	
 }
 
 
@@ -192,10 +160,6 @@ systeminfo()
 	echo "Kernel:$kern" | tee -a $logfilename
 	echo "ip:$IP" | tee -a $logfilename
 	echo "ipaddr:$IPaddr" | tee -a $logfilename
-	echo "host:$hostp" | tee -a $logfilename
-	echo "uptime:$up" | tee -a $logfilename
-	echo "vm:$vm" | tee -a $logfilename
-	echo "he:$he" | tee -a $logfilename
 	echo -e "\n\n" | tee -a $logfilename
 
 }
@@ -261,22 +225,20 @@ iotest()
 #开始测试来的路由
 tracetest()
 {
-	mtrgo "http://www.ipip.net/traceroute.php?as=1&a=get&n=1&id=274&ip=$IP" "广州电信（天翼云）"
-	mtrgo "http://www.ipip.net/traceroute.php?as=1&a=get&n=1&id=100&ip=$IP" "上海电信（天翼云）"
+	mtrgo "http://www.ipip.net/traceroute.php?as=1&a=get&n=1&id=18&ip=$IP" "陕西宝鸡电信"
 	mtrgo "http://www.ipip.net/traceroute.php?as=1&a=get&n=1&id=20&ip=$IP" "厦门电信CN2"
 	mtrgo "http://www.ipip.net/traceroute.php?as=1&a=get&n=1&id=12&ip=$IP" "重庆联通"
-	mtrgo "http://www.ipip.net/traceroute.php?as=1&a=get&n=1&id=2&ip=$IP" "天津移动"
+	mtrgo "http://www.ipip.net/traceroute.php?as=1&a=get&n=1&id=356&ip=$IP" "上海移动"
 }
 
 
 #开始测试回程路由
 backtracetest()
 {
-	mtrback "14.215.116.1" "广州电信（天翼云）"
-	mtrback "101.227.255.45" "上海电信（天翼云）"
+	mtrback "113.140.37.245" "陕西宝鸡电信"
 	mtrback "117.28.254.129" "厦门电信CN2"
 	mtrback "113.207.32.65" "重庆联通"
-	mtrback "211.103.87.9" "天津移动"
+	mtrback "183.192.160.3" "上海移动"
 }
 
 
@@ -284,19 +246,6 @@ backtracetest()
 pingtest()
 {
 	ping_test $IP
-}
-
-
-#开始测试跳板ping
-gotoping()
-{
-	echo "===开始测试跳板ping===" | tee -a $logfilename
-	testping speedtest.tokyo.linode.com Linode日本
-	testping hnd-jp-ping.vultr.com Vultr日本
-	testping 192.157.214.6 Budgetvm洛杉矶
-	testping downloadtest.kdatacenter.com kdatacenter韩国SK
-	testping 210.92.18.1 星光韩国KT
-	echo "===跳板ping测试结束===" | tee -a $logfilename
 }
 
 
@@ -349,7 +298,6 @@ simple_test()
 normal_test()
 {
 	prewget
-	virt
 	systeminfo
 	bdtest
 	dltest
@@ -357,14 +305,12 @@ normal_test()
 	tracetest
 	backtracetest
 	pingtest
-	gotoping
 	
 }
 
 all_test()
 {
 	prewget
-	virt
 	systeminfo
 	bdtest
 	dltest
@@ -372,7 +318,6 @@ all_test()
 	tracetest
 	backtracetest
 	pingtest
-	gotoping
 	benchtest
 	
 }
